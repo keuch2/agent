@@ -1,7 +1,6 @@
-import { Link } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { Building2, CreditCard, LayoutGrid, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -14,37 +13,49 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import type { NavItem } from '@/types';
+import { index as plansIndex } from '@/routes/admin/plans';
+import { index as tenantsIndex } from '@/routes/admin/tenants';
+import { index as usersIndex } from '@/routes/users';
+import type { Auth, NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-];
+function navigation(auth: Auth): {
+    label: string;
+    home: NavItem['href'];
+    items: NavItem[];
+} {
+    if (auth.user.is_superadmin) {
+        return {
+            label: 'Mister Co.',
+            home: tenantsIndex(),
+            items: [
+                { title: 'Empresas', href: tenantsIndex(), icon: Building2 },
+                { title: 'Planes', href: plansIndex(), icon: CreditCard },
+            ],
+        };
+    }
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
-    },
-];
+    const items: NavItem[] = [
+        { title: 'Inicio', href: dashboard(), icon: LayoutGrid },
+    ];
+
+    if (auth.can.manageUsers) {
+        items.push({ title: 'Usuarios', href: usersIndex(), icon: Users });
+    }
+
+    return { label: auth.tenant?.name ?? 'Empresa', home: dashboard(), items };
+}
 
 export function AppSidebar() {
+    const { auth } = usePage<{ auth: Auth }>().props;
+    const nav = navigation(auth);
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
+                            <Link href={nav.home} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
@@ -53,11 +64,10 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={nav.items} label={nav.label} />
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>
