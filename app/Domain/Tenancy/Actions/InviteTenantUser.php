@@ -1,0 +1,46 @@
+<?php
+
+namespace App\Domain\Tenancy\Actions;
+
+use App\Domain\Tenancy\Enums\TenantRole;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
+
+/**
+ * Creates a user inside a tenant with a random password and emails them a
+ * link to set their own. Accounts are never self-registered.
+ */
+final class InviteTenantUser
+{
+    public function handle(int $tenantId, string $name, string $email, TenantRole $role): User
+    {
+        $user = new User([
+            'name' => $name,
+            'email' => $email,
+            'password' => Str::password(40),
+        ]);
+        $user->tenant_id = $tenantId;
+        $user->save();
+
+        $this->assignRole($user, $role);
+
+        DB::afterCommit(fn () => Password::broker()->sendResetLink(['email' => $user->email]));
+
+        return $user;
+    }
+
+    public function assignRole(User $user, TenantRole $role): void
+    {
+        $previousTeam = getPermissionsTeamId();
+        setPermissionsTeamId($user->tenant_id);
+
+        try {
+            $user->syncRoles([$role->value]);
+            $user->unsetRelation('roles');
+        } finally {
+            setPermissionsTeamId($previousTeam);
+        }
+    }
+}

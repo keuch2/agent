@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Tenancy\Models\Tenant;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -27,6 +29,29 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    private function auth(Request $request): array
+    {
+        $user = $request->user();
+
+        if (! $user instanceof User) {
+            return ['user' => null, 'tenant' => null, 'can' => []];
+        }
+
+        $tenant = $request->attributes->get('tenant');
+
+        return [
+            'user' => $user->only(['id', 'name', 'email', 'is_superadmin', 'email_verified_at', 'created_at', 'updated_at'])
+                + ['two_factor_enabled' => $user->hasConfirmedTwoFactor()],
+            'tenant' => $tenant instanceof Tenant ? $tenant->only(['id', 'name']) : null,
+            'can' => [
+                'manageUsers' => $user->can('viewAny', User::class),
+            ],
+        ];
+    }
+
+    /**
      * Define the props that are shared by default.
      *
      * @see https://inertiajs.com/shared-data
@@ -38,9 +63,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
-            'auth' => [
-                'user' => $request->user(),
-            ],
+            'auth' => fn () => $this->auth($request),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

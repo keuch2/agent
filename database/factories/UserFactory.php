@@ -2,6 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Domain\Tenancy\Actions\InviteTenantUser;
+use App\Domain\Tenancy\Enums\TenantRole;
+use App\Domain\Tenancy\Models\Tenant;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -25,6 +28,8 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
+            'tenant_id' => Tenant::factory(),
+            'is_superadmin' => false,
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
@@ -34,6 +39,19 @@ class UserFactory extends Factory
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
         ];
+    }
+
+    /**
+     * Platform (Mister Co.) user: no tenant.
+     */
+    public function superadmin(): static
+    {
+        return $this->state(['tenant_id' => null, 'is_superadmin' => true]);
+    }
+
+    public function withRole(TenantRole $role): static
+    {
+        return $this->afterCreating(fn (User $user) => app(InviteTenantUser::class)->assignRole($user, $role));
     }
 
     /**
