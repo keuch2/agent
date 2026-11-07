@@ -3,8 +3,8 @@
 use App\Domain\Audit\Models\AuditLog;
 use App\Domain\Tenancy\Enums\TenantRole;
 use App\Domain\Tenancy\Models\Tenant;
+use App\Domain\Tenancy\Notifications\TenantUserInvitation;
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Notification;
 
 beforeEach(function () {
@@ -26,7 +26,12 @@ it('creates a user in the admin tenant and invites them by email', function () {
         ->and($user->hasRole(TenantRole::Advisor->value))->toBeTrue()
         ->and(asTenant($this->tenant, fn () => AuditLog::query()->where('action', 'user.created')->count()))->toBe(1);
 
-    Notification::assertSentTo($user, ResetPassword::class);
+    Notification::assertSentTo($user, TenantUserInvitation::class, function (TenantUserInvitation $invitation) use ($user) {
+        $mail = $invitation->toMail($user);
+
+        return str_contains($mail->subject, $this->tenant->name)
+            && str_contains($mail->actionUrl, 'reset-password/');
+    });
 });
 
 it('changes the role of a user', function () {

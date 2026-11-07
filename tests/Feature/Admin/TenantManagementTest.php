@@ -5,9 +5,9 @@ use App\Domain\Billing\Models\Plan;
 use App\Domain\Tenancy\Enums\TenantRole;
 use App\Domain\Tenancy\Enums\TenantStatus;
 use App\Domain\Tenancy\Models\Tenant;
+use App\Domain\Tenancy\Notifications\TenantUserInvitation;
 use App\Domain\Tenancy\TenantContext;
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Notification;
 
 it('requires two-factor authentication for superadmins', function () {
@@ -59,7 +59,7 @@ it('creates a tenant with its first administrator', function () {
         ->and($admin->hasRole(TenantRole::Admin->value))->toBeTrue()
         ->and(AuditLog::on(TenantContext::ADMIN_CONNECTION)->where('action', 'tenant.created')->value('tenant_id'))->toBe($tenant->id);
 
-    Notification::assertSentTo($admin, ResetPassword::class);
+    Notification::assertSentTo($admin, TenantUserInvitation::class);
 });
 
 it('validates the RUC format and unique admin email', function () {
