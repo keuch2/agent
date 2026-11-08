@@ -37,6 +37,11 @@ return [
 
     'mailers' => [
 
+        'platform' => [
+            'transport' => 'platform',
+            'fallback' => env('MAIL_FALLBACK_MAILER', 'log'),
+        ],
+
         'smtp' => [
             'transport' => 'smtp',
             'scheme' => env('MAIL_SCHEME'),

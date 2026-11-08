@@ -3,6 +3,8 @@ import { Plus } from 'lucide-react';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { edit as whatsappEdit } from '@/routes/admin/channels/whatsapp';
+import { store as startSupport } from '@/routes/admin/support';
 import { create, edit, index } from '@/routes/admin/tenants';
 
 type TenantRow = {
@@ -80,6 +82,9 @@ export default function TenantsIndex({
                                     <th className="px-4 py-3 font-medium">
                                         Alta
                                     </th>
+                                    <th className="px-4 py-3 text-right font-medium">
+                                        Acciones
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -118,6 +123,37 @@ export default function TenantsIndex({
                                             {new Date(
                                                 tenant.created_at,
                                             ).toLocaleDateString('es-PY')}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex justify-end gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
+                                                >
+                                                    <Link
+                                                        href={whatsappEdit(
+                                                            tenant.id,
+                                                        )}
+                                                    >
+                                                        WhatsApp
+                                                    </Link>
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
+                                                >
+                                                    <Link
+                                                        href={startSupport(
+                                                            tenant.id,
+                                                        )}
+                                                        as="button"
+                                                    >
+                                                        Modo soporte
+                                                    </Link>
+                                                </Button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

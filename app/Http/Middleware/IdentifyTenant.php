@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Tenancy\Support\SupportMode;
 use App\Domain\Tenancy\TenantContext;
 use App\Models\User;
 use Closure;
@@ -14,7 +15,10 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class IdentifyTenant
 {
-    public function __construct(private readonly TenantContext $tenantContext) {}
+    public function __construct(
+        private readonly TenantContext $tenantContext,
+        private readonly SupportMode $support,
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -25,6 +29,25 @@ class IdentifyTenant
             setPermissionsTeamId($user->tenant_id);
         }
 
+        if ($user instanceof User && $user->is_superadmin) {
+            $this->applySupportMode($request, $user);
+        }
+
         return $next($request);
+    }
+
+    private function applySupportMode(Request $request, User $user): void
+    {
+        $target = $this->support->current($request);
+
+        if ($target === null
+            || ! $user->hasConfirmedTwoFactor()
+            || ! in_array('tenant', $request->route()?->gatherMiddleware() ?? [], true)) {
+            return;
+        }
+
+        $this->tenantContext->set($target['id']);
+        setPermissionsTeamId($target['id']);
+        $request->attributes->set(SupportMode::REQUEST_ATTRIBUTE, true);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Tenant;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Tenancy\Actions\InviteTenantUser;
 use App\Domain\Tenancy\Enums\TenantRole;
+use App\Domain\Tenancy\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tenant\TenantUserRequest;
 use App\Models\User;
@@ -44,10 +45,10 @@ class UserController extends Controller
         ]);
     }
 
-    public function store(TenantUserRequest $request, InviteTenantUser $invite, AuditLogger $audit): RedirectResponse
+    public function store(TenantUserRequest $request, InviteTenantUser $invite, AuditLogger $audit, TenantContext $tenantContext): RedirectResponse
     {
         $user = $invite->handle(
-            $request->user()->tenant_id,
+            $tenantContext->idOrFail(),
             $request->validated('name'),
             $request->validated('email'),
             TenantRole::from($request->validated('role')),

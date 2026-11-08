@@ -14,7 +14,8 @@ export type User = {
 export type Auth = {
     user: User;
     tenant: { id: number; name: string } | null;
-    can: { manageUsers?: boolean };
+    support: { id: number; name: string } | null;
+    can: { manageUsers?: boolean; manageChannels?: boolean };
 };
 
 export type TwoFactorSetupData = {

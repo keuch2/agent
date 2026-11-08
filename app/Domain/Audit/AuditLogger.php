@@ -3,6 +3,7 @@
 namespace App\Domain\Audit;
 
 use App\Domain\Audit\Models\AuditLog;
+use App\Domain\Tenancy\Support\SupportMode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -17,7 +18,7 @@ final class AuditLogger
      * @param  array<string, mixed>  $old
      * @param  array<string, mixed>  $new
      */
-    public function record(string $action, ?Model $subject = null, array $old = [], array $new = [], ?int $tenantId = null): AuditLog
+    public function record(string $action, ?Model $subject = null, array $old = [], array $new = [], ?int $tenantId = null, bool $supportMode = false): AuditLog
     {
         $log = new AuditLog([
             'user_id' => $this->request->user()?->getAuthIdentifier(),
@@ -25,7 +26,7 @@ final class AuditLogger
             'old_values' => Arr::except($old, self::REDACTED) ?: null,
             'new_values' => Arr::except($new, self::REDACTED) ?: null,
             'ip_address' => $this->request->ip(),
-            'support_mode' => false,
+            'support_mode' => $supportMode || $this->request->attributes->getBoolean(SupportMode::REQUEST_ATTRIBUTE),
         ]);
 
         $log->tenant_id = $tenantId;

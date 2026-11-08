@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Tenancy\Enums\TenantPermission;
 use App\Domain\Tenancy\Models\Tenant;
+use App\Domain\Tenancy\Support\SupportMode;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -36,7 +38,7 @@ class HandleInertiaRequests extends Middleware
         $user = $request->user();
 
         if (! $user instanceof User) {
-            return ['user' => null, 'tenant' => null, 'can' => []];
+            return ['user' => null, 'tenant' => null, 'support' => null, 'can' => []];
         }
 
         $tenant = $request->attributes->get('tenant');
@@ -45,8 +47,10 @@ class HandleInertiaRequests extends Middleware
             'user' => $user->only(['id', 'name', 'email', 'is_superadmin', 'email_verified_at', 'created_at', 'updated_at'])
                 + ['two_factor_enabled' => $user->hasConfirmedTwoFactor()],
             'tenant' => $tenant instanceof Tenant ? $tenant->only(['id', 'name']) : null,
+            'support' => $user->is_superadmin ? app(SupportMode::class)->current($request) : null,
             'can' => [
                 'manageUsers' => $user->can('viewAny', User::class),
+                'manageChannels' => $user->can(TenantPermission::ManageChannels->value),
             ],
         ];
     }
