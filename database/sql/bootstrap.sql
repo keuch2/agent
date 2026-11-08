@@ -6,11 +6,11 @@
 --   agente_admin  BYPASSRLS; superadmin panel and cross-tenant jobs (DB_ADMIN_*)
 --   agente_app    runtime role, subject to Row Level Security (DB_USERNAME)
 
-SELECT format('CREATE ROLE agente_owner LOGIN NOBYPASSRLS PASSWORD %s', :owner_pw)
+SELECT format('CREATE ROLE agente_owner LOGIN NOBYPASSRLS PASSWORD %L', :owner_pw)
 WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'agente_owner')\gexec
-SELECT format('CREATE ROLE agente_admin LOGIN BYPASSRLS PASSWORD %s', :admin_pw)
+SELECT format('CREATE ROLE agente_admin LOGIN BYPASSRLS PASSWORD %L', :admin_pw)
 WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'agente_admin')\gexec
-SELECT format('CREATE ROLE agente_app LOGIN NOBYPASSRLS PASSWORD %s', :app_pw)
+SELECT format('CREATE ROLE agente_app LOGIN NOBYPASSRLS PASSWORD %L', :app_pw)
 WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'agente_app')\gexec
 
 SELECT format('CREATE DATABASE %I OWNER agente_owner', :'db')
