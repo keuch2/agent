@@ -7,9 +7,12 @@ use App\Domain\Billing\Policies\PlanPolicy;
 use App\Domain\Tenancy\Models\Tenant;
 use App\Domain\Tenancy\Policies\TenantPolicy;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -32,6 +35,8 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(Tenant::class, TenantPolicy::class);
         Gate::policy(Plan::class, PlanPolicy::class);
+
+        RateLimiter::for('meta-webhooks', fn (Request $request) => Limit::perMinute(1200)->by($request->ip()));
     }
 
     /**

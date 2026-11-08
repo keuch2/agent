@@ -9,7 +9,7 @@ use Illuminate\Support\Arr;
 
 final class AuditLogger
 {
-    private const array REDACTED = ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'];
+    private const array REDACTED = ['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes', 'access_token'];
 
     public function __construct(private readonly Request $request) {}
 
